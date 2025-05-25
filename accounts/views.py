@@ -1,5 +1,7 @@
 import re
 from django.shortcuts import render, redirect, get_object_or_404
+
+from cart.models import Cart
 from .forms import RegistrationForm, UserForm, UserProfileForm
 from .models import Account, UserProfile
 
@@ -85,6 +87,16 @@ def login(request):
         user = auth.authenticate(email=email, password=password)
 
         if user is not None:
+            try:
+                cart = Cart.objects.get(cart_id=_cart_id(request))
+                is_cart_item_exists = CartItem.objects.filter(cart=cart).exists()
+                if is_cart_item_exists:
+                    cart_items = CartItem.objects.filter(cart=cart)
+                    for item in cart_items:
+                        item.user = user
+                        item.save()
+            except:
+                pass
             auth.login(request, user)
             #messages.success(request, 'You are now logged in.')
             return redirect('dashboard')    
